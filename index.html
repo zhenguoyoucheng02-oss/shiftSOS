@@ -731,6 +731,7 @@
 
             // UI Open
             modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
             void modal.offsetWidth;
             modal.classList.remove('opacity-0');
             frame.classList.remove('scale-95');
@@ -802,6 +803,7 @@
             modal.classList.add('opacity-0');
             frame.classList.remove('scale-100');
             frame.classList.add('scale-95');
+            document.body.style.overflow = '';
             setTimeout(() => { modal.classList.add('hidden'); }, 300);
         };
     </script>
@@ -865,6 +867,7 @@
 
         function openOperatorModal() {
             operatorModal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
             void operatorModal.offsetWidth; // Trigger reflow
             operatorModal.classList.remove('opacity-0');
             operatorFrame.classList.remove('scale-95');
@@ -875,6 +878,7 @@
             operatorModal.classList.add('opacity-0');
             operatorFrame.classList.remove('scale-100');
             operatorFrame.classList.add('scale-95');
+            document.body.style.overflow = '';
             setTimeout(() => {
                 operatorModal.classList.add('hidden');
             }, 300);
@@ -886,6 +890,7 @@
 
         function openContactModal() {
             contactModal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
             void contactModal.offsetWidth; // Trigger reflow
             contactModal.classList.remove('opacity-0');
             contactFrame.classList.remove('scale-95');
@@ -896,6 +901,7 @@
             contactModal.classList.add('opacity-0');
             contactFrame.classList.remove('scale-100');
             contactFrame.classList.add('scale-95');
+            document.body.style.overflow = '';
             setTimeout(() => {
                 contactModal.classList.add('hidden');
             }, 300);
@@ -926,6 +932,7 @@
 
         function openDemo() {
             demoModal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
             // Trigger reflow
             void demoModal.offsetWidth;
             demoModal.classList.remove('opacity-0');
@@ -938,6 +945,7 @@
             demoModal.classList.add('opacity-0');
             demoFrame.classList.remove('scale-100');
             demoFrame.classList.add('scale-95');
+            document.body.style.overflow = '';
             setTimeout(() => {
                 demoModal.classList.add('hidden');
             }, 300);
