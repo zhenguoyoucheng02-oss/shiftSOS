@@ -750,8 +750,9 @@
             if (!currentUser) return; // Auth wait is handled roughly here by async nature
 
             try {
-                // law_versions コレクションから全ドキュメントを取得して最新を探す
-                const colRef = collection(db, 'law_versions');
+                // terms_versions または privacy_versions コレクションから取得
+                const collectionName = type === 'terms' ? 'terms_versions' : 'privacy_versions';
+                const colRef = collection(db, collectionName);
                 const snapshot = await getDocs(colRef);
 
                 if (snapshot.empty) {
