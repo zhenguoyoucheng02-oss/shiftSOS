@@ -676,6 +676,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, collection, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Initialize Firebase
         // ★ここにFirebaseコンソールから取得した設定値を入力してください
@@ -765,9 +766,37 @@
                 // 指定されたパス: law_versions/2025-1-30 を参照
                 const docRef = doc(db, 'law_versions', '2025-1-30');
                 const docSnap = await getDoc(docRef);
+                // law_versions コレクションから全ドキュメントを取得して最新を探す
+                const colRef = collection(db, 'law_versions');
+                const snapshot = await getDocs(colRef);
 
                 if (docSnap.exists()) {
                     const data = docSnap.data();
+                if (snapshot.empty) {
+                    contentEl.innerHTML = `
+                        <div class="text-center py-12">
+                            <p class="text-slate-400 mb-2">ドキュメントが見つかりません。</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // ドキュメントID（日付文字列）をパースしてソート
+                const docs = snapshot.docs.map(d => {
+                    const parts = d.id.split('-').map(Number);
+                    // YYYY-M-D 形式を想定
+                    const date = new Date(parts[0], parts[1] - 1, parts[2]);
+                    return { id: d.id, date: date, data: d.data() };
+                });
+
+                // 日付の降順（新しい順）にソート
+                docs.sort((a, b) => b.date - a.date);
+
+                // 最新のドキュメントを使用
+                const latestDoc = docs[0];
+
+                if (latestDoc) {
+                    const data = latestDoc.data;
                     // type (terms または privacy) をキーとしてデータを取得。なければ content フィールド、それもなければ空
                     contentEl.innerHTML = data[type] || data.content || '<p>内容がありません。</p>';
                 } else {
