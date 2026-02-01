@@ -1,0 +1,1334 @@
+<!DOCTYPE html>
+<html lang="ja" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>シフトSOS | 管理者のためのシフト管理自動化ソリューション</title>
+    <meta name="description" content="急なシフト交代をLINEで自動化。管理者のタイムパフォーマンスを最大化し、組織に精神的な余裕をもたらす「シフトSOS」。">
+    
+    <!-- Tailwind CSS (Design Framework) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Noto+Serif+JP:wght@400;600&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        slate: {
+                            850: '#1e293b',
+                            900: '#0f172a',
+                            950: '#020617',
+                        },
+                        gold: {
+                            400: '#fbbf24',
+                            500: '#d4af37', // Premium Gold
+                            600: '#b4942b',
+                        },
+                        line: {
+                            DEFAULT: '#06C755',
+                            hover: '#05b34c',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['"Noto Sans JP"', 'sans-serif'],
+                        serif: ['"Noto Serif JP"', 'serif'],
+                    },
+                    backgroundImage: {
+                        'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #0f172a;
+            color: #f8fafc;
+            overflow-x: hidden;
+        }
+        
+        /* Premium Text Gradients */
+        .text-gradient-gold {
+            background: linear-gradient(135deg, #f3e5ab 0%, #d4af37 50%, #b4942b 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .border-gradient-gold {
+            border-image: linear-gradient(135deg, #f3e5ab 0%, #d4af37 100%) 1;
+        }
+
+        /* Subtle Animations */
+        .fade-in-up {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+        }
+        
+        .fade-in-up.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .delay-100 { transition-delay: 100ms; }
+        .delay-200 { transition-delay: 200ms; }
+        .delay-300 { transition-delay: 300ms; }
+
+        /* Glassmorphism for cards */
+        .glass-card {
+            background: rgba(30, 41, 59, 0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        /* Image overlay styles */
+        .image-overlay {
+            position: relative;
+        }
+        .image-overlay::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to top, #0f172a 0%, rgba(15, 23, 42, 0.6) 50%, rgba(15, 23, 42, 0.3) 100%);
+        }
+
+        /* Demo App Specific Styles */
+        .app-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .app-scrollbar::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.5);
+        }
+        .app-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(100, 116, 139, 0.5);
+            border-radius: 4px;
+        }
+        .draggable-item {
+            cursor: grab;
+        }
+        .draggable-item:active {
+            cursor: grabbing;
+        }
+
+        /* Legal Content Styles (for injected HTML) */
+        .legal-content h1 { font-size: 1.5em; font-weight: bold; margin-bottom: 1em; color: #fff; }
+        .legal-content h2 { font-size: 1.25em; font-weight: bold; margin-top: 1.5em; margin-bottom: 0.75em; color: #d4af37; border-bottom: 1px solid #334155; padding-bottom: 0.25em; }
+        .legal-content h3 { font-size: 1.1em; font-weight: bold; margin-top: 1.2em; margin-bottom: 0.5em; color: #e2e8f0; }
+        .legal-content p { margin-bottom: 1em; line-height: 1.6; color: #cbd5e1; }
+        .legal-content ul, .legal-content ol { margin-bottom: 1em; padding-left: 1.5em; color: #cbd5e1; }
+        .legal-content li { margin-bottom: 0.5em; list-style-type: disc; }
+        .legal-content ol li { list-style-type: decimal; }
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- Header / Navigation -->
+    <header class="fixed w-full z-50 transition-all duration-300 bg-slate-900/80 backdrop-blur-md border-b border-white/10" id="header">
+        <!-- Beta Notice Bar -->
+        <div class="bg-slate-950/90 backdrop-blur border-b border-gold-500/20 text-center py-2 px-4">
+            <p class="text-xs md:text-sm text-slate-300 font-medium tracking-wide">
+                <span class="text-gold-500 mr-2">✦ Beta Version</span>
+                現在ベータ版期間中のため、すべての機能を<span class="text-white font-bold mx-1 border-b border-gold-500">無料</span>でご利用いただけます
+            </p>
+        </div>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-20">
+                <div class="flex items-center">
+                    <span class="text-2xl font-serif font-bold text-gradient-gold tracking-wider">シフトSOS</span>
+                </div>
+                <nav class="hidden md:flex space-x-8 items-center">
+                    <a href="#problem" class="text-slate-300 hover:text-gold-500 transition-colors text-sm tracking-wide">課題</a>
+                    <a href="#solution" class="text-slate-300 hover:text-gold-500 transition-colors text-sm tracking-wide">解決策</a>
+                    <a href="#features" class="text-slate-300 hover:text-gold-500 transition-colors text-sm tracking-wide">機能</a>
+                    <button onclick="openContactModal()" class="text-slate-300 hover:text-gold-500 transition-colors text-sm tracking-wide flex items-center gap-1 focus:outline-none">
+                        お問い合わせ <i data-lucide="mail" class="w-3 h-3 text-slate-500 group-hover:text-gold-500"></i>
+                    </button>
+                    
+                    <!-- LINE CTA Button in Header -->
+                    <a href="https://lin.ee/XJ48ZGx" target="_blank" class="px-5 py-2 bg-line hover:bg-line-hover text-white font-medium rounded-full transition-all duration-300 transform hover:scale-105 shadow-lg shadow-line/20 flex items-center gap-2">
+                        <svg viewBox="0 0 24 24" class="w-4 h-4 fill-current"><path d="M22 10.4c0-5.2-4.5-9.4-10-9.4S2 5.2 2 10.4c0 4.7 3.7 8.6 8.7 9.3.3 0 .7.1.8.3.1.2.1.5 0 .8-.2.7-.8 2.5-1 3.5-.1.5.3 1 .8.6 4.3-2.3 8.3-5.2 8.3-5.2.1 0 .2-.1.3-.1 1.3-1.3 2.1-3 2.1-5z"/></svg>
+                        LINEで導入
+                    </a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="relative min-h-screen flex items-center justify-center pt-32 overflow-hidden">
+        <!-- Background Image with Overlay -->
+        <div class="absolute inset-0 z-0">
+            <img 
+                src="https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=2000" 
+                alt="Modern Office Background" 
+                class="w-full h-full object-cover opacity-20"
+            />
+            <div class="absolute inset-0 bg-gradient-to-b from-slate-900/80 via-slate-900/50 to-slate-900"></div>
+        </div>
+
+        <!-- Background Effects -->
+        <div class="absolute top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
+            <div class="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] bg-gold-500/10 rounded-full blur-[100px]"></div>
+            <div class="absolute bottom-[-10%] left-[-5%] w-[500px] h-[500px] bg-blue-900/20 rounded-full blur-[100px]"></div>
+        </div>
+
+        <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <div class="fade-in-up">
+                <p class="text-gold-500 tracking-[0.2em] mb-6 text-sm uppercase font-medium">For Smart Management</p>
+                <h1 class="text-4xl md:text-6xl lg:text-7xl font-serif font-medium leading-tight mb-8 drop-shadow-lg">
+                    シフト管理の<br class="md:hidden" />
+                    <span class="text-gradient-gold">静寂と秩序</span>を<br />
+                    あなたの手に。
+                </h1>
+                <p class="text-slate-300 text-lg md:text-xl max-w-2xl mx-auto mb-12 leading-relaxed drop-shadow-md">
+                    急な欠勤連絡、終わらない調整作業。<br />
+                    「シフトSOS」は、LINEを活用した自動化技術で<br />
+                    管理者の貴重な時間を守り、組織の品格を高めます。
+                </p>
+                <div class="flex flex-col sm:flex-row justify-center gap-4">
+                    <button onclick="openDemo()" class="px-8 py-4 bg-gold-500 hover:bg-gold-600 text-slate-900 font-bold rounded-full transition-all shadow-[0_0_20px_rgba(212,175,55,0.3)] hover:shadow-[0_0_30px_rgba(212,175,55,0.5)]">
+                        デモを体験する
+                    </button>
+                    <!-- Hero LINE CTA -->
+                    <a href="https://lin.ee/XJ48ZGx" target="_blank" class="px-8 py-4 bg-line hover:bg-line-hover text-white font-bold rounded-full transition-all shadow-lg hover:shadow-line/50 flex items-center justify-center gap-2 group">
+                        <svg viewBox="0 0 24 24" class="w-6 h-6 fill-current group-hover:scale-110 transition-transform"><path d="M22 10.4c0-5.2-4.5-9.4-10-9.4S2 5.2 2 10.4c0 4.7 3.7 8.6 8.7 9.3.3 0 .7.1.8.3.1.2.1.5 0 .8-.2.7-.8 2.5-1 3.5-.1.5.3 1 .8.6 4.3-2.3 8.3-5.2 8.3-5.2.1 0 .2-.1.3-.1 1.3-1.3 2.1-3 2.1-5z"/></svg>
+                        LINEで無料で始める
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Scroll Indicator -->
+        <div class="absolute bottom-10 left-1/2 transform -translate-x-1/2 animate-bounce">
+            <i data-lucide="chevron-down" class="text-slate-500 w-6 h-6"></i>
+        </div>
+    </section>
+
+    <!-- Problem Section -->
+    <section id="problem" class="py-24 bg-slate-950 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-2 gap-16 items-center">
+                <div class="fade-in-up">
+                    <h2 class="text-3xl font-serif mb-6">その「連絡」が、<br />経営資源を奪っている。</h2>
+                    <p class="text-slate-400 leading-relaxed mb-6">
+                        「急に体調を崩しました...」<br />
+                        スタッフからの1本の電話で、あなたの計画は崩れ去ります。<br />
+                        代わりを探すための電話、個別のLINE連絡、返信の確認。<br />
+                        これらは本来、経営やマネジメントに充てられるべき<br />
+                        <strong class="text-white">「管理者の最も高価な時間」</strong>を浪費させます。
+                    </p>
+                    <div class="flex items-start space-x-4 mt-8">
+                        <div class="p-3 bg-red-900/20 rounded-lg text-red-400">
+                            <i data-lucide="phone-off" class="w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-white font-medium mb-1">終わりのない調整ストレス</h4>
+                            <p class="text-sm text-slate-500">休日でも鳴り止まない連絡が、精神的な休息を妨げます。</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Problem Image -->
+                <div class="relative fade-in-up delay-200">
+                    <div class="absolute inset-0 bg-gold-500/10 rounded-2xl transform rotate-3 scale-105"></div>
+                    <div class="relative rounded-2xl overflow-hidden border border-slate-800 shadow-2xl group">
+                        <div class="absolute inset-0 bg-slate-900/40 z-10 transition-opacity group-hover:bg-slate-900/20"></div>
+                        <img 
+                            src="https://images.unsplash.com/photo-1513530534585-c7b1394c6d51?auto=format&fit=crop&q=80&w=800" 
+                            alt="Stressful Work Environment" 
+                            class="w-full h-auto object-cover grayscale opacity-80 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700"
+                        />
+                        <div class="absolute bottom-0 left-0 right-0 p-6 z-20 bg-gradient-to-t from-slate-950 to-transparent">
+                             <div class="flex items-center space-x-3">
+                                <span class="bg-red-500/20 border border-red-500/30 text-red-400 px-3 py-1 rounded text-xs font-mono tracking-widest">
+                                    TIME LOST
+                                </span>
+                                <span class="text-slate-300 text-xs tracking-wider">従来のシフト調整</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Solution Section -->
+    <section id="solution" class="py-24 relative overflow-hidden">
+        <!-- Background Image Element -->
+        <div class="absolute right-0 top-1/2 transform -translate-y-1/2 w-1/3 h-full opacity-5 pointer-events-none hidden lg:block">
+             <img src="https://images.unsplash.com/photo-1556761175-5973dc0f32e7?auto=format&fit=crop&q=80&w=800" class="w-full h-full object-cover" alt="Smartphone Usage" />
+             <div class="absolute inset-0 bg-gradient-to-r from-slate-900 via-transparent to-transparent"></div>
+        </div>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="text-center mb-16 fade-in-up">
+                <span class="text-gold-500 tracking-widest text-sm font-medium uppercase">The Solution</span>
+                <h2 class="text-3xl md:text-5xl font-serif mt-4 mb-6">LINE × オートメーション</h2>
+                <p class="text-slate-400 max-w-2xl mx-auto">
+                    日常のツール「LINE」が、最強のシフト管理アシスタントに。<br />
+                    「シフトSOS」は、連絡のループを自動化し、瞬時に解決へ導きます。
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-8">
+                <!-- Feature 1 -->
+                <div class="glass-card p-0 rounded-2xl fade-in-up delay-100 hover:border-gold-500/30 transition-colors group overflow-hidden">
+                    <div class="h-40 overflow-hidden relative">
+                        <img src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&q=80&w=500" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-60 group-hover:opacity-80" alt="Notification">
+                        <div class="absolute inset-0 bg-slate-900/60 flex items-center justify-center">
+                            <div class="w-14 h-14 bg-slate-800/80 rounded-full flex items-center justify-center backdrop-blur-sm border border-slate-700">
+                                <i data-lucide="zap" class="w-7 h-7 text-gold-500"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-8">
+                        <h3 class="text-xl font-serif mb-4">SOS発信の簡略化</h3>
+                        <p class="text-slate-400 text-sm leading-relaxed">
+                            スタッフは日付と理由を入力するだけ。
+                            管理者への報告と、同僚への代行依頼が一瞬で完了します。
+                            個別の「お願い」連絡による心理的負担をゼロに。
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Feature 2 -->
+                <div class="glass-card p-0 rounded-2xl fade-in-up delay-200 hover:border-gold-500/30 transition-colors group overflow-hidden">
+                    <div class="h-40 overflow-hidden relative">
+                        <img src="https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&q=80&w=500" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-60 group-hover:opacity-80" alt="Matching">
+                        <div class="absolute inset-0 bg-slate-900/60 flex items-center justify-center">
+                            <div class="w-14 h-14 bg-slate-800/80 rounded-full flex items-center justify-center backdrop-blur-sm border border-slate-700">
+                                <i data-lucide="check-circle-2" class="w-7 h-7 text-gold-500"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-8">
+                        <h3 class="text-xl font-serif mb-4">スマートなマッチング</h3>
+                        <p class="text-slate-400 text-sm leading-relaxed">
+                            「早い者勝ち」で即決するか、「承認制」で管理者が選ぶか。
+                            状況に合わせて最適な決定フローを選択可能。
+                            通知は必要な人だけに届き、静寂を守ります。
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Feature 3 -->
+                <div class="glass-card p-0 rounded-2xl fade-in-up delay-300 hover:border-gold-500/30 transition-colors group overflow-hidden">
+                    <div class="h-40 overflow-hidden relative">
+                         <img src="https://images.unsplash.com/photo-1639815188546-c43c240ff4df?auto=format&fit=crop&q=80&w=500" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-60 group-hover:opacity-80" alt="Security">
+                        <div class="absolute inset-0 bg-slate-900/60 flex items-center justify-center">
+                            <div class="w-14 h-14 bg-slate-800/80 rounded-full flex items-center justify-center backdrop-blur-sm border border-slate-700">
+                                <i data-lucide="shield-check" class="w-7 h-7 text-gold-500"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-8">
+                        <h3 class="text-xl font-serif mb-4">信頼と安全の設計</h3>
+                        <p class="text-slate-400 text-sm leading-relaxed">
+                            利用規約への同意フローを標準装備。
+                            プライベートな連絡先を交換することなく、
+                            公式LINEアカウントを通じて安全にやり取りが完結します。
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Detailed Features -->
+    <section id="features" class="py-24 bg-slate-900">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row gap-16 items-center">
+                <!-- Left: Control Panel Image (Specific) -->
+                <div class="md:w-1/2 fade-in-up relative">
+                    <div class="absolute -inset-4 bg-gradient-to-r from-gold-500/20 to-blue-500/20 rounded-xl blur-xl opacity-30"></div>
+                    <div class="relative rounded-xl overflow-hidden shadow-2xl border border-slate-700">
+                        <img src="https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&q=80&w=1000" alt="Manager selecting staff" class="w-full h-auto object-cover opacity-90 hover:scale-105 transition-transform duration-700">
+                        
+                        <!-- Overlay UI Mockups: Selection Process -->
+                        <div class="absolute bottom-6 left-6 right-6 space-y-3">
+                             <div class="bg-slate-900/95 backdrop-blur border border-slate-600 p-5 rounded-lg shadow-2xl transform translate-y-2 hover:translate-y-0 transition-transform">
+                                <div class="flex justify-between items-center mb-4 border-b border-slate-700 pb-2">
+                                    <span class="text-xs font-bold text-slate-300">10/24(金) 応募者リスト</span>
+                                    <span class="text-[10px] text-red-400 bg-red-500/10 px-2 py-0.5 rounded-full">承認待ち</span>
+                                </div>
+                                
+                                <div class="space-y-3">
+                                    <!-- Candidate 1 -->
+                                    <div class="flex items-center justify-between p-2 bg-slate-800 rounded border border-gold-500/30">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-xs">👩</div>
+                                            <div>
+                                                <div class="text-xs font-bold text-white">田中 美咲</div>
+                                                <div class="text-[10px] text-slate-500">貢献度: 高</div>
+                                            </div>
+                                        </div>
+                                        <button class="bg-gold-500 hover:bg-gold-400 text-slate-900 text-[10px] font-bold px-3 py-1.5 rounded transition-colors shadow-lg shadow-gold-500/20 flex items-center gap-1">
+                                            承認 <i data-lucide="check" class="w-3 h-3"></i>
+                                        </button>
+                                    </div>
+                                    
+                                    <!-- Candidate 2 -->
+                                    <div class="flex items-center justify-between p-2 bg-slate-800/50 rounded border border-slate-700 opacity-60">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-xs">👨</div>
+                                            <div>
+                                                <div class="text-xs font-bold text-slate-300">鈴木 一郎</div>
+                                                <div class="text-[10px] text-slate-500">申請: 1分前</div>
+                                            </div>
+                                        </div>
+                                        <button class="bg-slate-700 text-slate-400 text-[10px] px-3 py-1.5 rounded cursor-default">
+                                            保留
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Content -->
+                <div class="md:w-1/2 flex flex-col justify-center fade-in-up delay-200">
+                    <h3 class="text-3xl font-serif mb-8">管理者に、「選ぶ」余裕を。</h3>
+                    
+                    <div class="space-y-8">
+                        <div class="flex">
+                            <div class="flex-shrink-0 mt-1">
+                                <i data-lucide="sliders" class="text-gold-500 w-6 h-6"></i>
+                            </div>
+                            <div class="ml-6">
+                                <h4 class="text-lg font-medium text-white">柔軟な決定プロセス</h4>
+                                <p class="mt-2 text-slate-400 text-sm">
+                                    スピード重視の「🚀 早い者勝ち」か、質を重視した「🛡️ 承認制」か。店舗の状況やスタッフの習熟度に合わせて設定可能です。
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="flex">
+                            <div class="flex-shrink-0 mt-1">
+                                <i data-lucide="users" class="text-gold-500 w-6 h-6"></i>
+                            </div>
+                            <div class="ml-6">
+                                <h4 class="text-lg font-medium text-white">優先通知システム</h4>
+                                <p class="mt-2 text-slate-400 text-sm">
+                                    「まずはベテラン勢に声をかけたい」。そんな要望に応える優先順位設定機能。時間が経過すると自動で次のグループへ通知を拡大します。
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="flex">
+                            <div class="flex-shrink-0 mt-1">
+                                <i data-lucide="smartphone" class="text-gold-500 w-6 h-6"></i>
+                            </div>
+                            <div class="ml-6">
+                                <h4 class="text-lg font-medium text-white">アプリインストール不要</h4>
+                                <p class="mt-2 text-slate-400 text-sm">
+                                    スタッフは使い慣れたLINEだけで操作完了。新しいアプリの導入教育コストは一切かかりません。
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Target Section -->
+    <section class="py-20 border-y border-slate-800 bg-slate-950">
+        <div class="max-w-4xl mx-auto px-4 text-center fade-in-up">
+            <h3 class="text-2xl font-serif mb-12">このような組織に最適です</h3>
+            <div class="grid md:grid-cols-2 gap-8 justify-center">
+                <!-- Target 2 -->
+                <div class="relative group rounded-xl overflow-hidden aspect-[4/3] flex items-end justify-center">
+                    <img src="https://images.unsplash.com/photo-1573167507387-6b4b98cb7c13?auto=format&fit=crop&q=80&w=600" alt="24h Service" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-40 group-hover:opacity-60">
+                    <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/50 to-transparent"></div>
+                    <div class="relative z-10 p-6 text-center">
+                        <div class="text-gold-500 text-3xl mb-2 font-serif">01</div>
+                        <h4 class="font-medium text-lg mb-2 text-white">24時間稼働のサービス</h4>
+                        <p class="text-xs text-slate-400">深夜の欠勤連絡も自動対応。</p>
+                    </div>
+                </div>
+
+                <!-- Target 3 -->
+                <div class="relative group rounded-xl overflow-hidden aspect-[4/3] flex items-end justify-center">
+                    <img src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&q=80&w=600" alt="Students" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-40 group-hover:opacity-60">
+                    <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/50 to-transparent"></div>
+                    <div class="relative z-10 p-6 text-center">
+                        <div class="text-gold-500 text-3xl mb-2 font-serif">02</div>
+                        <h4 class="font-medium text-lg mb-2 text-white">学生バイトが多い現場</h4>
+                        <p class="text-xs text-slate-400">LINE世代への高い親和性。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section (Closing) -->
+    <section id="contact" class="py-32 relative overflow-hidden">
+        <div class="absolute inset-0">
+            <img src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=2000" alt="Business Architecture" class="w-full h-full object-cover opacity-10">
+            <div class="absolute inset-0 bg-gradient-to-b from-slate-950 via-slate-900/90 to-slate-950"></div>
+        </div>
+        
+        <div class="max-w-4xl mx-auto px-4 text-center relative z-10 fade-in-up">
+            <h2 class="text-4xl md:text-5xl font-serif mb-8 text-white">
+                本来の業務に、<br />
+                <span class="text-gold-500">熱狂</span>しよう。
+            </h2>
+            <p class="text-slate-400 mb-12 leading-relaxed">
+                シフト調整という「守り」の業務はシステムに任せ、<br />
+                あなたは売上向上や人材育成という「攻め」の業務に集中してください。<br />
+                それが、シフトSOSの願いです。
+            </p>
+            
+            <!-- Large LINE CTA Button -->
+            <div class="flex flex-col items-center justify-center gap-6">
+                <a href="https://lin.ee/XJ48ZGx" target="_blank" class="w-full sm:w-auto px-12 py-5 bg-line hover:bg-line-hover text-white text-lg font-bold rounded-full transition-all shadow-[0_0_30px_rgba(6,199,85,0.4)] hover:shadow-[0_0_50px_rgba(6,199,85,0.6)] transform hover:-translate-y-1 flex items-center justify-center gap-3">
+                    <svg viewBox="0 0 24 24" class="w-8 h-8 fill-current"><path d="M22 10.4c0-5.2-4.5-9.4-10-9.4S2 5.2 2 10.4c0 4.7 3.7 8.6 8.7 9.3.3 0 .7.1.8.3.1.2.1.5 0 .8-.2.7-.8 2.5-1 3.5-.1.5.3 1 .8.6 4.3-2.3 8.3-5.2 8.3-5.2.1 0 .2-.1.3-.1 1.3-1.3 2.1-3 2.1-5z"/></svg>
+                    LINE公式アカウントを友だち追加
+                </a>
+                <p class="text-sm text-slate-500">
+                    <span class="text-line">●</span> まずは友だち追加から。最短3分で利用開始できます。
+                </p>
+                <button onclick="openDemo()" class="text-slate-400 hover:text-white text-sm underline underline-offset-4 transition-colors mt-4">
+                    まずはデモを体験する
+                </button>
+            </div>
+
+            <p class="mt-12 text-xs text-slate-500">
+                ※ 最短3営業日で導入可能です。<br />
+                ※ 現在、お申し込み多数につき順次ご案内しております。
+            </p>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-slate-950 py-12 border-t border-slate-900">
+        <div class="max-w-7xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center text-sm">
+            <div class="mb-4 md:mb-0">
+                <span class="text-xl font-serif font-bold text-slate-200 tracking-wider">シフトSOS</span>
+                <p class="text-slate-600 mt-2">Smart Shift Management Solution</p>
+            </div>
+            <div class="flex space-x-6 text-slate-500 items-center">
+                <button onclick="openOperatorModal()" class="hover:text-gold-500 transition-colors focus:outline-none">運営者情報</button>
+                <button onclick="window.openLegalModal('terms')" class="hover:text-gold-500 transition-colors focus:outline-none">利用規約</button>
+                <button onclick="window.openLegalModal('privacy')" class="hover:text-gold-500 transition-colors focus:outline-none">プライバシーポリシー</button>
+            </div>
+            <div class="mt-8 md:mt-0 text-slate-600">
+                &copy; Shift SOS All Rights Reserved.
+            </div>
+        </div>
+    </footer>
+
+    <!-- OPERATOR MODAL -->
+    <div id="operator-modal" class="fixed inset-0 z-[100] hidden bg-slate-950/90 backdrop-blur-sm flex items-center justify-center p-4 transition-opacity duration-300 opacity-0">
+        <div class="relative w-full max-w-md bg-slate-900 rounded-2xl border border-slate-700 shadow-2xl overflow-hidden transform transition-transform duration-300 scale-95" id="operator-frame">
+            <div class="p-6">
+                <div class="flex justify-between items-start mb-6">
+                    <h3 class="text-xl font-serif font-bold text-white">運営者情報</h3>
+                    <button onclick="closeOperatorModal()" class="p-1 text-slate-400 hover:text-white transition-colors">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+                
+                <div class="space-y-4 text-sm text-slate-300">
+                    <div class="flex items-center gap-4 py-3 border-b border-slate-800">
+                        <i data-lucide="layers" class="w-5 h-5 text-gold-500 flex-shrink-0"></i>
+                        <div>
+                            <p class="text-xs text-slate-500">屋号 / チーム名</p>
+                            <p class="font-medium text-white">シフトSOS 開発チーム</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center gap-4 py-3 border-b border-slate-800">
+                        <i data-lucide="user" class="w-5 h-5 text-gold-500 flex-shrink-0"></i>
+                        <div>
+                            <p class="text-xs text-slate-500">開発者・代表</p>
+                            <p class="font-medium text-white">真鍋優成</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start gap-4 py-3 border-b border-slate-800">
+                        <i data-lucide="flag" class="w-5 h-5 text-gold-500 mt-1 flex-shrink-0"></i>
+                        <div>
+                            <p class="text-xs text-slate-500 mb-1">ミッション・開発の動機</p>
+                            <p class="font-medium text-white text-xs leading-relaxed">店舗責任者としての経験から無駄な作業を削りたいと強く感じたのが動機です。私のサービスからたくさんの方の業務を少しでも効率化して負担を無くせたらという思いでこのサービスを作成しました。</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start gap-4 py-3">
+                        <i data-lucide="mail" class="w-5 h-5 text-gold-500 mt-1 flex-shrink-0"></i>
+                        <div>
+                            <p class="text-xs text-slate-500 mb-1">お問い合わせ</p>
+                            <button onclick="closeOperatorModal(); setTimeout(openContactModal, 300);" class="font-medium text-gold-500 mb-2 hover:text-gold-400 underline underline-offset-4 text-left transition-colors">
+                                サイト内フォームよりご連絡ください
+                            </button>
+                            <p class="text-xs text-slate-300 leading-relaxed bg-slate-800/50 p-3 rounded border border-slate-700">お問い合わせフォームではサービスの情報だけでなく効率化した作業のアイデアなど様々な問い合わせに対応させていただきたいと考えています。</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-6 text-center">
+                    <p class="text-xs text-slate-600">
+                        ※ 本サービスは個人事業として運営しております。<br>
+                        特定商取引法に基づく表記が必要な取引は現在発生しておりません（全機能無料）。
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CONTACT MODAL -->
+    <div id="contact-modal" class="fixed inset-0 z-[100] hidden bg-slate-950/90 backdrop-blur-sm flex items-center justify-center p-4 transition-opacity duration-300 opacity-0">
+        <div class="relative w-full max-w-4xl bg-slate-900 rounded-2xl border border-slate-700 shadow-2xl overflow-hidden h-[80vh] flex flex-col transform transition-transform duration-300 scale-95" id="contact-frame">
+            <div class="flex justify-between items-center p-4 border-b border-slate-700 bg-slate-800/50">
+                <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                    <i data-lucide="mail" class="w-5 h-5 text-gold-500"></i> お問い合わせ
+                </h3>
+                <button onclick="closeContactModal()" class="p-2 bg-slate-700 rounded-full text-slate-300 hover:text-white hover:bg-slate-600 transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div class="flex-1 bg-white relative">
+                <!-- Fallback/Loading message if iframe fails to load -->
+                <div class="absolute inset-0 flex flex-col items-center justify-center text-slate-500 p-8 text-center -z-10">
+                    <p class="mb-2">フォームを読み込んでいます...</p>
+                    <p class="text-xs">表示されない場合は<a href="https://forms.gle/iZLFqaA6EKMti2Ep8" target="_blank" class="text-blue-600 underline">こちら</a>から直接アクセスしてください。</p>
+                </div>
+                
+                <!-- Google Form Iframe -->
+                <iframe src="https://forms.gle/iZLFqaA6EKMti2Ep8" width="100%" height="100%" frameborder="0" marginheight="0" marginwidth="0" class="w-full h-full">読み込んでいます…</iframe>
+            </div>
+        </div>
+    </div>
+
+    <!-- LEGAL MODAL (View) -->
+    <div id="legal-modal" class="fixed inset-0 z-[100] hidden bg-slate-950/90 backdrop-blur-sm flex items-center justify-center p-4 transition-opacity duration-300 opacity-0">
+        <div class="relative w-full max-w-4xl bg-slate-900 rounded-2xl border border-slate-700 shadow-2xl overflow-hidden h-[80vh] flex flex-col transform transition-transform duration-300 scale-95" id="legal-frame">
+            <div class="flex justify-between items-center p-4 border-b border-slate-700 bg-slate-800/50">
+                <h3 class="text-lg font-bold text-white flex items-center gap-2" id="legal-title">
+                    <!-- Title injected via JS -->
+                </h3>
+                <button onclick="closeLegalModal()" class="p-2 bg-slate-700 rounded-full text-slate-300 hover:text-white hover:bg-slate-600 transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div class="flex-1 overflow-y-auto p-8 app-scrollbar bg-slate-900">
+                <div id="legal-content" class="legal-content text-slate-300">
+                    <!-- Content injected via JS -->
+                    <div class="flex flex-col items-center justify-center h-full text-slate-500">
+                        <div class="w-8 h-8 border-2 border-slate-600 border-t-gold-500 rounded-full animate-spin mb-4"></div>
+                        <p>読み込んでいます...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DEMO MODAL -->
+    <div id="demo-modal" class="fixed inset-0 z-[100] hidden bg-slate-950/90 backdrop-blur-sm flex items-center justify-center p-4 transition-opacity duration-300 opacity-0">
+        <!-- Mobile Frame -->
+        <div class="relative w-full max-w-[360px] bg-slate-900 rounded-[2.5rem] border-[8px] border-slate-800 shadow-2xl overflow-hidden h-[720px] max-h-[90vh] flex flex-col transform transition-transform duration-300 scale-95" id="demo-frame">
+            <!-- Notch -->
+            <div class="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-slate-800 rounded-b-xl z-20"></div>
+            
+            <!-- Close Button (External) -->
+            <button onclick="closeDemo()" class="absolute top-4 right-4 z-50 p-2 bg-slate-800/80 rounded-full text-white hover:bg-red-500/80 transition-colors backdrop-blur">
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+
+            <!-- App Screen Content -->
+            <div id="app-screen" class="flex-1 overflow-y-auto overflow-x-hidden bg-slate-950 text-slate-100 relative pt-8 pb-20 app-scrollbar">
+                <!-- Dynamic Content will be injected here via JS -->
+            </div>
+
+            <!-- Bottom Navigation -->
+            <div id="app-nav" class="absolute bottom-0 w-full bg-slate-900 border-t border-slate-800 h-16 flex justify-around items-center hidden z-10 px-2">
+                <!-- Nav items injected via JS -->
+            </div>
+
+            <!-- Home Indicator -->
+            <div class="absolute bottom-2 left-1/2 -translate-x-1/2 w-32 h-1 bg-slate-700 rounded-full z-20 pointer-events-none"></div>
+        </div>
+    </div>
+
+    <!-- Interactive Scripts -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Initialize Firebase
+        const firebaseConfig = JSON.parse(__firebase_config || '{}');
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+        let currentUser = null;
+
+        // Auth Logic
+        const initAuth = async () => {
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (error) {
+                console.error("Auth Error", error);
+            }
+        };
+        initAuth();
+
+        onAuthStateChanged(auth, (user) => {
+            currentUser = user;
+        });
+
+        // --- Legal Document Logic ---
+
+        // View: Open Modal & Fetch
+        window.openLegalModal = async (type) => {
+            const modal = document.getElementById('legal-modal');
+            const frame = document.getElementById('legal-frame');
+            const titleEl = document.getElementById('legal-title');
+            const contentEl = document.getElementById('legal-content');
+
+            const titleMap = { 'terms': '利用規約', 'privacy': 'プライバシーポリシー' };
+            titleEl.textContent = titleMap[type] || 'ドキュメント';
+
+            // Reset Content
+            contentEl.innerHTML = `
+                <div class="flex flex-col items-center justify-center h-64 text-slate-500">
+                    <div class="w-8 h-8 border-2 border-slate-600 border-t-gold-500 rounded-full animate-spin mb-4"></div>
+                    <p>読み込んでいます...</p>
+                </div>
+            `;
+
+            // UI Open
+            modal.classList.remove('hidden');
+            void modal.offsetWidth;
+            modal.classList.remove('opacity-0');
+            frame.classList.remove('scale-95');
+            frame.classList.add('scale-100');
+
+            if (!currentUser) return; // Auth wait is handled roughly here by async nature
+
+            try {
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'legal', type);
+                const docSnap = await getDoc(docRef);
+
+                if (docSnap.exists()) {
+                    contentEl.innerHTML = docSnap.data().content || '<p>内容がありません。</p>';
+                } else {
+                    contentEl.innerHTML = `
+                        <div class="text-center py-12">
+                            <p class="text-slate-400 mb-2">ドキュメントが登録されていません。</p>
+                            <p class="text-xs text-slate-600 mb-4">現在準備中です。</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error("Error:", error);
+                contentEl.innerHTML = '<p class="text-red-400">読み込みエラーが発生しました。</p>';
+            }
+        };
+
+        window.closeLegalModal = () => {
+            const modal = document.getElementById('legal-modal');
+            const frame = document.getElementById('legal-frame');
+            modal.classList.add('opacity-0');
+            frame.classList.remove('scale-100');
+            frame.classList.add('scale-95');
+            setTimeout(() => { modal.classList.add('hidden'); }, 300);
+        };
+    </script>
+
+    <script>
+        // Icon initialization
+        lucide.createIcons();
+
+        // Scroll Animation Observer
+        document.addEventListener('DOMContentLoaded', () => {
+            const observerOptions = {
+                root: null,
+                rootMargin: '0px',
+                threshold: 0.1
+            };
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                    }
+                });
+            }, observerOptions);
+
+            const fadeElements = document.querySelectorAll('.fade-in-up');
+            fadeElements.forEach(el => observer.observe(el));
+        });
+
+        // Smooth Scroll
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href');
+                if (targetId === '#') return;
+                // If target is external link, do nothing (let default happen)
+                if (targetId.startsWith('http')) return;
+                
+                document.querySelector(targetId).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+
+        // Header Background
+        window.addEventListener('scroll', () => {
+            const header = document.getElementById('header');
+            if (window.scrollY > 50) {
+                header.classList.add('bg-slate-900/95', 'shadow-lg');
+                header.classList.remove('bg-slate-900/80');
+            } else {
+                header.classList.remove('bg-slate-900/95', 'shadow-lg');
+                header.classList.add('bg-slate-900/80');
+            }
+        });
+
+        // --- MODAL LOGIC ---
+
+        // Operator Modal
+        const operatorModal = document.getElementById('operator-modal');
+        const operatorFrame = document.getElementById('operator-frame');
+
+        function openOperatorModal() {
+            operatorModal.classList.remove('hidden');
+            void operatorModal.offsetWidth; // Trigger reflow
+            operatorModal.classList.remove('opacity-0');
+            operatorFrame.classList.remove('scale-95');
+            operatorFrame.classList.add('scale-100');
+        }
+
+        function closeOperatorModal() {
+            operatorModal.classList.add('opacity-0');
+            operatorFrame.classList.remove('scale-100');
+            operatorFrame.classList.add('scale-95');
+            setTimeout(() => {
+                operatorModal.classList.add('hidden');
+            }, 300);
+        }
+
+        // Contact Modal
+        const contactModal = document.getElementById('contact-modal');
+        const contactFrame = document.getElementById('contact-frame');
+
+        function openContactModal() {
+            contactModal.classList.remove('hidden');
+            void contactModal.offsetWidth; // Trigger reflow
+            contactModal.classList.remove('opacity-0');
+            contactFrame.classList.remove('scale-95');
+            contactFrame.classList.add('scale-100');
+        }
+
+        function closeContactModal() {
+            contactModal.classList.add('opacity-0');
+            contactFrame.classList.remove('scale-100');
+            contactFrame.classList.add('scale-95');
+            setTimeout(() => {
+                contactModal.classList.add('hidden');
+            }, 300);
+        }
+
+        // Demo Modal
+        const demoModal = document.getElementById('demo-modal');
+        const demoFrame = document.getElementById('demo-frame');
+        const appScreen = document.getElementById('app-screen');
+        const appNav = document.getElementById('app-nav');
+
+        let appState = {
+            currentUserType: null, // 'staff' or 'admin'
+            sosList: [
+                { id: 1, name: "佐藤 健太", date: "10/24(金) 17:00-22:00", reason: "体調不良のため", status: "募集中", applicants: ["田中 美咲", "鈴木 一郎"] },
+                { id: 2, name: "山田 花子", date: "10/25(土) 10:00-15:00", reason: "急用のため", status: "解決済", applicants: [] }
+            ],
+            settings: {
+                scope: 'all', // all, priority
+                method: 'first', // first, approval
+                priorityList: [
+                    { name: '田中 美咲', sosCount: 1, helpCount: 5 },
+                    { name: '鈴木 一郎', sosCount: 0, helpCount: 3 },
+                    { name: '高橋 優子', sosCount: 2, helpCount: 2 }
+                ]
+            }
+        };
+
+        function openDemo() {
+            demoModal.classList.remove('hidden');
+            // Trigger reflow
+            void demoModal.offsetWidth;
+            demoModal.classList.remove('opacity-0');
+            demoFrame.classList.remove('scale-95');
+            demoFrame.classList.add('scale-100');
+            renderScreen('login');
+        }
+
+        function closeDemo() {
+            demoModal.classList.add('opacity-0');
+            demoFrame.classList.remove('scale-100');
+            demoFrame.classList.add('scale-95');
+            setTimeout(() => {
+                demoModal.classList.add('hidden');
+            }, 300);
+        }
+
+        function renderScreen(screenName, params = {}) {
+            appScreen.innerHTML = ''; // Clear screen
+            appNav.classList.add('hidden'); // Hide nav by default
+
+            switch(screenName) {
+                case 'login':
+                    appScreen.innerHTML = `
+                        <div class="flex flex-col items-center justify-center h-full px-6 text-center">
+                            <div class="mb-8">
+                                <span class="text-3xl font-serif font-bold text-gradient-gold tracking-wider">シフトSOS</span>
+                                <p class="text-slate-400 text-xs mt-2">Team Collaboration App</p>
+                            </div>
+                            <div class="w-full space-y-4">
+                                <p class="text-sm text-slate-300 mb-8">「シフトSOS」へようこそ。<br>まずはログインしてください。</p>
+                                <button onclick="renderScreen('register')" class="w-full py-3 bg-[#06C755] hover:bg-[#05b34c] text-white font-bold rounded-lg transition-colors flex items-center justify-center gap-2">
+                                    <svg viewBox="0 0 24 24" class="w-5 h-5 fill-current"><path d="M22 10.4c0-5.2-4.5-9.4-10-9.4S2 5.2 2 10.4c0 4.7 3.7 8.6 8.7 9.3.3 0 .7.1.8.3.1.2.1.5 0 .8-.2.7-.8 2.5-1 3.5-.1.5.3 1 .8.6 4.3-2.3 8.3-5.2 8.3-5.2.1 0 .2-.1.3-.1 1.3-1.3 2.1-3 2.1-5z"/></svg>
+                                    LINEでログイン
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    break;
+
+                case 'register':
+                    appScreen.innerHTML = `
+                        <div class="px-6 py-4">
+                             <h2 class="text-xl font-bold text-white mb-6">初期登録</h2>
+                             
+                             <div class="flex mb-6 bg-slate-800 rounded-lg p-1">
+                                <button onclick="switchTab('existing')" id="tab-existing" class="flex-1 py-2 text-sm rounded-md bg-slate-700 text-white font-medium transition-all">既存組織に参加</button>
+                                <button onclick="switchTab('new')" id="tab-new" class="flex-1 py-2 text-sm rounded-md text-slate-400 font-medium transition-all">新規組織作成</button>
+                             </div>
+
+                             <!-- Existing Org Form -->
+                             <div id="form-existing" class="space-y-4 animate-fade-in">
+                                <div>
+                                    <label class="block text-xs text-slate-400 mb-1">あなたの名前</label>
+                                    <input type="text" class="w-full bg-slate-800 border border-slate-700 rounded p-3 text-white text-sm focus:border-gold-500 outline-none" placeholder="例: 山田 太郎">
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-slate-400 mb-1">組織ID (管理者から共有)</label>
+                                    <input type="text" class="w-full bg-slate-800 border border-slate-700 rounded p-3 text-white text-sm focus:border-gold-500 outline-none" placeholder="例: shop123">
+                                </div>
+                                <button onclick="loginAs('staff')" class="w-full mt-4 py-3 bg-gold-500 text-slate-900 font-bold rounded-lg hover:bg-gold-600 transition-colors">
+                                    確認して参加 (スタッフ)
+                                </button>
+                             </div>
+
+                             <!-- New Org Form -->
+                             <div id="form-new" class="space-y-4 hidden animate-fade-in">
+                                <div>
+                                    <label class="block text-xs text-slate-400 mb-1">管理者名</label>
+                                    <input type="text" class="w-full bg-slate-800 border border-slate-700 rounded p-3 text-white text-sm focus:border-gold-500 outline-none" placeholder="例: 店長 佐藤">
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-slate-400 mb-1">組織ID (半角英数)</label>
+                                    <input type="text" class="w-full bg-slate-800 border border-slate-700 rounded p-3 text-white text-sm focus:border-gold-500 outline-none" placeholder="例: cafe_shibuya">
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-slate-400 mb-1">組織名</label>
+                                    <input type="text" class="w-full bg-slate-800 border border-slate-700 rounded p-3 text-white text-sm focus:border-gold-500 outline-none" placeholder="例: カフェ渋谷店">
+                                </div>
+                                <button onclick="loginAs('admin')" class="w-full mt-4 py-3 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 transition-colors">
+                                    新規作成して登録 (管理者)
+                                </button>
+                             </div>
+                        </div>
+                    `;
+                    break;
+
+                case 'staffHome':
+                    appState.currentUserType = 'staff';
+                    setupNav();
+                    appScreen.innerHTML = `
+                        <div class="px-6 py-4">
+                            <div class="flex justify-between items-center mb-8">
+                                <div>
+                                    <p class="text-xs text-slate-400">カフェ渋谷店</p>
+                                    <h2 class="text-xl font-bold text-white">山田 太郎さん</h2>
+                                </div>
+                                <div class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center">
+                                    <i data-lucide="user" class="w-5 h-5 text-slate-400"></i>
+                                </div>
+                            </div>
+
+                            <div class="space-y-4">
+                                <!-- Main Action: SOS -->
+                                <button onclick="renderScreen('sosRequest')" class="w-full p-6 bg-gradient-to-br from-red-500/10 to-red-900/20 border border-red-500/30 rounded-2xl flex items-center gap-4 hover:bg-red-500/20 transition-all group">
+                                    <div class="w-14 h-14 rounded-full bg-red-500 flex items-center justify-center shadow-lg shadow-red-500/30 group-hover:scale-110 transition-transform">
+                                        <span class="text-2xl">🆘</span>
+                                    </div>
+                                    <div class="text-left">
+                                        <h3 class="text-lg font-bold text-red-100">SOSを出す</h3>
+                                        <p class="text-xs text-red-300/70">シフトに入れなくなった時</p>
+                                    </div>
+                                    <i data-lucide="chevron-right" class="ml-auto text-red-400"></i>
+                                </button>
+
+                                <!-- Main Action: Help -->
+                                <button onclick="renderScreen('notification')" class="w-full p-6 bg-gradient-to-br from-emerald-500/10 to-emerald-900/20 border border-emerald-500/30 rounded-2xl flex items-center gap-4 hover:bg-emerald-500/20 transition-all group">
+                                    <div class="w-14 h-14 rounded-full bg-emerald-500 flex items-center justify-center shadow-lg shadow-emerald-500/30 group-hover:scale-110 transition-transform">
+                                        <span class="text-2xl">🤝</span>
+                                    </div>
+                                    <div class="text-left">
+                                        <h3 class="text-lg font-bold text-emerald-100">誰かを助ける</h3>
+                                        <p class="text-xs text-emerald-300/70">募集通知を確認する</p>
+                                    </div>
+                                    <i data-lucide="chevron-right" class="ml-auto text-emerald-400"></i>
+                                </button>
+                            </div>
+
+                            <div class="mt-8">
+                                <h3 class="text-sm font-bold text-slate-400 mb-4">最近のアクティビティ</h3>
+                                <div class="bg-slate-800/50 rounded-xl p-4 text-center text-slate-500 text-xs">
+                                    まだ履歴はありません
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    lucide.createIcons();
+                    break;
+
+                case 'sosRequest':
+                    setupNav();
+                    appScreen.innerHTML = `
+                        <div class="px-6 py-4">
+                            <button onclick="renderScreen('staffHome')" class="text-slate-400 flex items-center gap-1 text-sm mb-6 hover:text-white">
+                                <i data-lucide="arrow-left" class="w-4 h-4"></i> 戻る
+                            </button>
+                            <h2 class="text-xl font-bold text-white mb-2">SOSを出す</h2>
+                            <p class="text-xs text-slate-400 mb-6">チームメンバーに交代のお願いを送信します。</p>
+
+                            <div class="space-y-6">
+                                <div>
+                                    <label class="block text-xs text-slate-400 mb-2">日付・時間</label>
+                                    <select class="w-full bg-slate-800 border border-slate-700 rounded p-3 text-white text-sm outline-none focus:border-gold-500">
+                                        <option>選択してください</option>
+                                        <option>10/24(金) 17:00 - 22:00</option>
+                                        <option>10/25(土) 10:00 - 15:00</option>
+                                        <option>10/26(日) 18:00 - 23:00</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-slate-400 mb-2">理由</label>
+                                    <textarea rows="3" class="w-full bg-slate-800 border border-slate-700 rounded p-3 text-white text-sm outline-none focus:border-gold-500" placeholder="例: 急な発熱のため、代わっていただけると助かります。"></textarea>
+                                </div>
+                                
+                                <button onclick="alert('SOSが送信されました！'); renderScreen('staffHome')" class="w-full py-4 bg-red-600 hover:bg-red-500 text-white font-bold rounded-lg transition-colors shadow-lg shadow-red-600/30 flex items-center justify-center gap-2">
+                                    <i data-lucide="send" class="w-4 h-4"></i> SOSを発信する
+                                </button>
+                                <p class="text-[10px] text-slate-500 text-center">※ LINE公式アカウントを通じて通知されます</p>
+                            </div>
+                        </div>
+                    `;
+                    lucide.createIcons();
+                    break;
+
+                case 'notification': // Simulating LINE notification link click
+                     setupNav();
+                     appScreen.innerHTML = `
+                        <div class="px-6 py-4">
+                            <button onclick="renderScreen('staffHome')" class="text-slate-400 flex items-center gap-1 text-sm mb-6 hover:text-white">
+                                <i data-lucide="arrow-left" class="w-4 h-4"></i> 戻る
+                            </button>
+                            <div class="bg-slate-800 rounded-2xl p-6 border border-slate-700 relative overflow-hidden">
+                                <div class="absolute top-0 left-0 w-1 h-full bg-red-500"></div>
+                                <div class="flex justify-between items-start mb-4">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-lg">👩</div>
+                                        <div>
+                                            <p class="text-xs text-slate-400">SOS発信者</p>
+                                            <p class="text-sm font-bold text-white">佐藤 健太</p>
+                                        </div>
+                                    </div>
+                                    <span class="bg-red-500/20 text-red-400 text-[10px] px-2 py-1 rounded-full">募集中</span>
+                                </div>
+                                
+                                <div class="space-y-3 mb-6">
+                                    <div class="flex items-center gap-3 text-sm text-slate-300">
+                                        <i data-lucide="calendar" class="w-4 h-4 text-gold-500"></i>
+                                        10/24(金) 17:00 - 22:00
+                                    </div>
+                                    <div class="flex items-start gap-3 text-sm text-slate-300">
+                                        <i data-lucide="message-circle" class="w-4 h-4 text-gold-500 mt-1"></i>
+                                        <p class="text-slate-400 text-xs bg-slate-900/50 p-2 rounded">体調不良のため、どなたか代わっていただけないでしょうか？申し訳ありません。</p>
+                                    </div>
+                                </div>
+
+                                <button onclick="alert('応募が完了しました！管理者の承認をお待ちください。'); renderScreen('staffHome')" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg transition-colors shadow-lg shadow-emerald-600/30">
+                                    助ける（応募する）
+                                </button>
+                            </div>
+                        </div>
+                     `;
+                     lucide.createIcons();
+                    break;
+
+                case 'adminHome':
+                    appState.currentUserType = 'admin';
+                    setupNav();
+                    appScreen.innerHTML = `
+                        <div class="px-6 py-4">
+                            <div class="flex justify-between items-center mb-6">
+                                <h2 class="text-xl font-bold text-white">ダッシュボード</h2>
+                                <span class="text-xs bg-indigo-500/20 text-indigo-300 px-2 py-1 rounded">管理者モード</span>
+                            </div>
+
+                            <!-- Dashboard Stats -->
+                            <div class="grid grid-cols-2 gap-4 mb-8">
+                                <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
+                                    <p class="text-xs text-slate-400">募集中案件</p>
+                                    <p class="text-2xl font-bold text-white mt-1">1<span class="text-xs font-normal text-slate-500 ml-1">件</span></p>
+                                </div>
+                                <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
+                                    <p class="text-xs text-slate-400">今月の解決</p>
+                                    <p class="text-2xl font-bold text-white mt-1">4<span class="text-xs font-normal text-slate-500 ml-1">件</span></p>
+                                </div>
+                            </div>
+
+                            <h3 class="text-sm font-bold text-slate-300 mb-4 flex items-center gap-2">
+                                <i data-lucide="list" class="w-4 h-4"></i> 募集状況一覧
+                            </h3>
+                            
+                            <div class="space-y-4">
+                                <!-- Active SOS -->
+                                <div class="bg-slate-800/50 rounded-xl p-4 border border-red-500/30">
+                                    <div class="flex justify-between items-center mb-3">
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-lg">👨</span>
+                                            <span class="text-sm font-bold">佐藤 健太</span>
+                                        </div>
+                                        <span class="text-xs text-red-400 font-bold animate-pulse">募集中</span>
+                                    </div>
+                                    <p class="text-xs text-slate-300 mb-3 ml-7">10/24(金) 17:00 - 22:00</p>
+                                    
+                                    <div class="ml-7 bg-slate-900 rounded p-3 mb-3">
+                                        <p class="text-[10px] text-slate-500 mb-2">応募者 (承認待ち)</p>
+                                        <div class="flex justify-between items-center mb-2">
+                                            <span class="text-xs text-white">1. 田中 美咲</span>
+                                            <button onclick="alert('田中さんで承認しました！')" class="px-3 py-1 bg-gold-500 text-slate-900 text-[10px] font-bold rounded hover:bg-gold-400">承認</button>
+                                        </div>
+                                        <div class="flex justify-between items-center">
+                                            <span class="text-xs text-white">2. 鈴木 一郎</span>
+                                            <button onclick="alert('鈴木さんで承認しました！')" class="px-3 py-1 bg-gold-500 text-slate-900 text-[10px] font-bold rounded hover:bg-gold-400">承認</button>
+                                        </div>
+                                    </div>
+                                    
+                                    <button class="w-full py-2 text-xs text-red-400 hover:bg-red-500/10 rounded border border-red-500/20 transition-colors">
+                                        募集を取り消す
+                                    </button>
+                                </div>
+
+                                <!-- Solved SOS -->
+                                <div class="bg-slate-800/30 rounded-xl p-4 border border-slate-700 opacity-60">
+                                    <div class="flex justify-between items-center mb-2">
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-lg">👩</span>
+                                            <span class="text-sm font-bold">山田 花子</span>
+                                        </div>
+                                        <span class="text-xs text-emerald-500 font-bold">解決済</span>
+                                    </div>
+                                    <p class="text-xs text-slate-300 ml-7">10/25(土) 10:00 - 15:00</p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    lucide.createIcons();
+                    break;
+                
+                case 'adminSettings':
+                    setupNav();
+                    appScreen.innerHTML = `
+                        <div class="px-6 py-4">
+                            <h2 class="text-xl font-bold text-white mb-6">設定</h2>
+                            
+                            <!-- Decision Method -->
+                            <div class="mb-8">
+                                <h3 class="text-sm font-bold text-gold-500 mb-3">② 決定方法</h3>
+                                <div class="space-y-3">
+                                    <label class="flex items-center justify-between p-3 bg-slate-800 rounded-lg border border-slate-700 cursor-pointer hover:border-gold-500/50">
+                                        <div>
+                                            <div class="flex items-center gap-2">
+                                                <span class="text-lg">🚀</span>
+                                                <span class="text-sm font-bold text-white">早い者勝ち</span>
+                                            </div>
+                                            <p class="text-[10px] text-slate-400 mt-1">応募した時点で即決します</p>
+                                        </div>
+                                        <input type="radio" name="method" value="first" ${appState.settings.method === 'first' ? 'checked' : ''} class="accent-gold-500">
+                                    </label>
+                                    <label class="flex items-center justify-between p-3 bg-slate-800 rounded-lg border border-slate-700 cursor-pointer hover:border-gold-500/50">
+                                        <div>
+                                            <div class="flex items-center gap-2">
+                                                <span class="text-lg">🛡️</span>
+                                                <span class="text-sm font-bold text-white">承認制</span>
+                                            </div>
+                                            <p class="text-[10px] text-slate-400 mt-1">管理者が選んで決定します</p>
+                                        </div>
+                                        <input type="radio" name="method" value="approval" ${appState.settings.method === 'approval' ? 'checked' : ''} class="accent-gold-500">
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Notification Scope -->
+                            <div class="mb-8">
+                                <h3 class="text-sm font-bold text-gold-500 mb-3">① 募集範囲</h3>
+                                <div class="space-y-3">
+                                    <label class="flex items-center justify-between p-3 bg-slate-800 rounded-lg border border-slate-700 cursor-pointer hover:border-gold-500/50">
+                                        <div>
+                                            <div class="flex items-center gap-2">
+                                                <span class="text-lg">📢</span>
+                                                <span class="text-sm font-bold text-white">全員に公開</span>
+                                            </div>
+                                        </div>
+                                        <input type="radio" name="scope" value="all" onchange="togglePriorityList(false)" checked class="accent-gold-500">
+                                    </label>
+                                    <label class="flex items-center justify-between p-3 bg-slate-800 rounded-lg border border-slate-700 cursor-pointer hover:border-gold-500/50">
+                                        <div>
+                                            <div class="flex items-center gap-2">
+                                                <span class="text-lg">🎯</span>
+                                                <span class="text-sm font-bold text-white">選別・段階的</span>
+                                            </div>
+                                        </div>
+                                        <input type="radio" name="scope" value="priority" onchange="togglePriorityList(true)" class="accent-gold-500">
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Priority List (Hidden by default) -->
+                            <div id="priority-section" class="hidden animate-fade-in">
+                                <h3 class="text-sm font-bold text-gold-500 mb-3">③ 優先順位の変更</h3>
+                                <p class="text-[10px] text-slate-400 mb-2">ドラッグして順番を入れ替えてください</p>
+                                <div class="space-y-2" id="sortable-list">
+                                    ${appState.settings.priorityList.map((user, index) => `
+                                        <div class="flex items-center gap-3 p-3 bg-slate-800 rounded border border-slate-700 draggable-item group hover:bg-slate-700">
+                                            <div class="text-slate-500 cursor-grab"><i data-lucide="grip-vertical" class="w-4 h-4"></i></div>
+                                            <div class="flex-1">
+                                                <div class="text-xs font-bold text-white">${user.name}</div>
+                                                <div class="text-[10px] text-slate-400 flex gap-2">
+                                                    <span>🆘 ${user.sosCount}</span>
+                                                    <span>🤝 ${user.helpCount}</span>
+                                                </div>
+                                            </div>
+                                            <div class="text-xs font-bold text-gold-500">#${index + 1}</div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                            
+                            <button onclick="alert('設定を保存しました'); renderScreen('adminHome')" class="w-full mt-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-lg transition-colors">
+                                保存する
+                            </button>
+                        </div>
+                    `;
+                    lucide.createIcons();
+                    break;
+            }
+        }
+
+        function setupNav() {
+            appNav.classList.remove('hidden');
+            if (appState.currentUserType === 'staff') {
+                appNav.innerHTML = `
+                    <button onclick="renderScreen('staffHome')" class="flex flex-col items-center justify-center w-full h-full text-white">
+                        <i data-lucide="home" class="w-5 h-5 mb-1"></i>
+                        <span class="text-[10px]">ホーム</span>
+                    </button>
+                    <button onclick="renderScreen('notification')" class="flex flex-col items-center justify-center w-full h-full text-slate-500 hover:text-white transition-colors">
+                        <i data-lucide="bell" class="w-5 h-5 mb-1"></i>
+                        <span class="text-[10px]">通知</span>
+                    </button>
+                    <button class="flex flex-col items-center justify-center w-full h-full text-slate-500 hover:text-white transition-colors">
+                        <i data-lucide="user" class="w-5 h-5 mb-1"></i>
+                        <span class="text-[10px]">マイページ</span>
+                    </button>
+                `;
+            } else {
+                appNav.innerHTML = `
+                    <button onclick="renderScreen('adminHome')" class="flex flex-col items-center justify-center w-full h-full text-white">
+                        <i data-lucide="layout-dashboard" class="w-5 h-5 mb-1"></i>
+                        <span class="text-[10px]">状況</span>
+                    </button>
+                    <button onclick="renderScreen('adminSettings')" class="flex flex-col items-center justify-center w-full h-full text-slate-500 hover:text-white transition-colors">
+                        <i data-lucide="settings" class="w-5 h-5 mb-1"></i>
+                        <span class="text-[10px]">設定</span>
+                    </button>
+                    <button class="flex flex-col items-center justify-center w-full h-full text-slate-500 hover:text-white transition-colors">
+                        <i data-lucide="users" class="w-5 h-5 mb-1"></i>
+                        <span class="text-[10px]">スタッフ</span>
+                    </button>
+                `;
+            }
+            lucide.createIcons();
+        }
+
+        // Helper functions for demo interactions
+        function switchTab(tab) {
+            const existingBtn = document.getElementById('tab-existing');
+            const newBtn = document.getElementById('tab-new');
+            const existingForm = document.getElementById('form-existing');
+            const newForm = document.getElementById('form-new');
+
+            if (tab === 'existing') {
+                existingBtn.classList.replace('text-slate-400', 'text-white');
+                existingBtn.classList.replace('bg-transparent', 'bg-slate-700'); // Dummy classes logic for simplicity
+                existingBtn.classList.add('bg-slate-700');
+                newBtn.classList.remove('bg-slate-700', 'text-white');
+                newBtn.classList.add('text-slate-400');
+                
+                existingForm.classList.remove('hidden');
+                newForm.classList.add('hidden');
+            } else {
+                newBtn.classList.add('bg-slate-700', 'text-white');
+                newBtn.classList.remove('text-slate-400');
+                existingBtn.classList.remove('bg-slate-700', 'text-white');
+                existingBtn.classList.add('text-slate-400');
+
+                newForm.classList.remove('hidden');
+                existingForm.classList.add('hidden');
+            }
+        }
+
+        function loginAs(type) {
+            if (type === 'staff') {
+                renderScreen('staffHome');
+            } else {
+                renderScreen('adminHome');
+            }
+        }
+
+        function togglePriorityList(show) {
+            const section = document.getElementById('priority-section');
+            if (show) {
+                section.classList.remove('hidden');
+            } else {
+                section.classList.add('hidden');
+            }
+        }
+    </script>
+</body>
+</html>
