@@ -621,12 +621,6 @@
                     <!-- Title injected via JS -->
                 </h3>
                 <div class="flex items-center gap-2">
-                    <button id="legal-edit-btn" onclick="toggleLegalEdit()" class="hidden px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-xs text-white rounded transition-colors border border-slate-600">
-                        編集
-                    </button>
-                    <button id="legal-save-btn" onclick="saveLegalContent()" class="hidden px-3 py-1.5 bg-gold-500 hover:bg-gold-600 text-xs text-slate-900 font-bold rounded transition-colors shadow-lg shadow-gold-500/20">
-                        保存
-                    </button>
                     <button onclick="closeLegalModal()" class="p-2 bg-slate-700 rounded-full text-slate-300 hover:text-white hover:bg-slate-600 transition-colors">
                         <i data-lucide="x" class="w-5 h-5"></i>
                     </button>
@@ -675,7 +669,6 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, collection, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getFirestore, doc, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Initialize Firebase
@@ -724,8 +717,6 @@
             const frame = document.getElementById('legal-frame');
             const titleEl = document.getElementById('legal-title');
             const contentEl = document.getElementById('legal-content');
-            const editBtn = document.getElementById('legal-edit-btn');
-            const saveBtn = document.getElementById('legal-save-btn');
 
             const titleMap = { 'terms': '利用規約', 'privacy': 'プライバシーポリシー' };
             titleEl.textContent = titleMap[type] || 'ドキュメント';
@@ -737,10 +728,6 @@
                     <p>読み込んでいます...</p>
                 </div>
             `;
-            
-            // Reset Buttons
-            if (editBtn) editBtn.classList.add('hidden');
-            if (saveBtn) saveBtn.classList.add('hidden');
 
             // UI Open
             modal.classList.remove('hidden');
@@ -763,15 +750,10 @@
             if (!currentUser) return; // Auth wait is handled roughly here by async nature
 
             try {
-                // 指定されたパス: law_versions/2025-1-30 を参照
-                const docRef = doc(db, 'law_versions', '2025-1-30');
-                const docSnap = await getDoc(docRef);
                 // law_versions コレクションから全ドキュメントを取得して最新を探す
                 const colRef = collection(db, 'law_versions');
                 const snapshot = await getDocs(colRef);
 
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
                 if (snapshot.empty) {
                     contentEl.innerHTML = `
                         <div class="text-center py-12">
@@ -807,61 +789,9 @@
                         </div>
                     `;
                 }
-                
-                // Show edit button
-                if (editBtn) editBtn.classList.remove('hidden');
             } catch (error) {
                 console.error("Error:", error);
                 contentEl.innerHTML = '<p class="text-red-400">読み込みエラーが発生しました。</p>';
-            }
-        };
-
-        window.toggleLegalEdit = () => {
-            const contentEl = document.getElementById('legal-content');
-            const editBtn = document.getElementById('legal-edit-btn');
-            const saveBtn = document.getElementById('legal-save-btn');
-            
-            const currentHTML = contentEl.innerHTML;
-            const textarea = document.createElement('textarea');
-            textarea.id = 'legal-textarea';
-            textarea.className = 'w-full h-[60vh] bg-slate-800 text-slate-300 p-4 rounded border border-slate-600 font-mono text-sm focus:outline-none focus:border-gold-500 resize-none';
-            textarea.value = currentHTML;
-            
-            contentEl.innerHTML = '';
-            contentEl.appendChild(textarea);
-            
-            editBtn.classList.add('hidden');
-            saveBtn.classList.remove('hidden');
-        };
-
-        window.saveLegalContent = async () => {
-            const textarea = document.getElementById('legal-textarea');
-            const contentEl = document.getElementById('legal-content');
-            const editBtn = document.getElementById('legal-edit-btn');
-            const saveBtn = document.getElementById('legal-save-btn');
-            
-            if (!textarea) return;
-            const newContent = textarea.value;
-            
-            try {
-                saveBtn.textContent = '保存中...';
-                saveBtn.disabled = true;
-                
-                // 指定されたパス: law_versions/2025-1-30 に保存
-                const docRef = doc(db, 'law_versions', '2025-1-30');
-                // terms または privacy のフィールドとして保存 (merge: true なので他のフィールドは消えません)
-                await setDoc(docRef, { [currentLegalType]: newContent }, { merge: true });
-                
-                contentEl.innerHTML = newContent;
-                
-                saveBtn.classList.add('hidden');
-                editBtn.classList.remove('hidden');
-            } catch (error) {
-                console.error("Save Error:", error);
-                alert('保存に失敗しました: ' + error.message);
-            } finally {
-                saveBtn.textContent = '保存';
-                saveBtn.disabled = false;
             }
         };
 
