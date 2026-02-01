@@ -620,9 +620,17 @@
                 <h3 class="text-lg font-bold text-white flex items-center gap-2" id="legal-title">
                     <!-- Title injected via JS -->
                 </h3>
-                <button onclick="closeLegalModal()" class="p-2 bg-slate-700 rounded-full text-slate-300 hover:text-white hover:bg-slate-600 transition-colors">
-                    <i data-lucide="x" class="w-5 h-5"></i>
-                </button>
+                <div class="flex items-center gap-2">
+                    <button id="legal-edit-btn" onclick="toggleLegalEdit()" class="hidden px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-xs text-white rounded transition-colors border border-slate-600">
+                        編集
+                    </button>
+                    <button id="legal-save-btn" onclick="saveLegalContent()" class="hidden px-3 py-1.5 bg-gold-500 hover:bg-gold-600 text-xs text-slate-900 font-bold rounded transition-colors shadow-lg shadow-gold-500/20">
+                        保存
+                    </button>
+                    <button onclick="closeLegalModal()" class="p-2 bg-slate-700 rounded-full text-slate-300 hover:text-white hover:bg-slate-600 transition-colors">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
             </div>
             <div class="flex-1 overflow-y-auto p-8 app-scrollbar bg-slate-900">
                 <div id="legal-content" class="legal-content text-slate-300">
@@ -667,16 +675,27 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, collection, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Initialize Firebase
         const firebaseConfig = (typeof __firebase_config !== 'undefined') ? JSON.parse(__firebase_config) : {};
+        // ★ここにFirebaseコンソールから取得した設定値を入力してください
+        const firebaseConfig = (typeof __firebase_config !== 'undefined') ? JSON.parse(__firebase_config) : {
+            apiKey: "AIzaSyCVjyb2UKIdgi4iRQVmgvfumiAolQIcC4I",
+  authDomain: "shiftsos2.firebaseapp.com",
+  projectId: "shiftsos2",
+  storageBucket: "shiftsos2.firebasestorage.app",
+  messagingSenderId: "323780246412",
+  appId: "1:323780246412:web:a26a160bd673de6ed2b4a9"
+        };
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
+        // Firestoreのデータ保存パスに使用するID（実際のサービスと合わせる必要があります）
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
         let currentUser = null;
+        let currentLegalType = null;
 
         // Auth Logic
         const initAuth = async () => {
@@ -700,10 +719,13 @@
 
         // View: Open Modal & Fetch
         window.openLegalModal = async (type) => {
+            currentLegalType = type;
             const modal = document.getElementById('legal-modal');
             const frame = document.getElementById('legal-frame');
             const titleEl = document.getElementById('legal-title');
             const contentEl = document.getElementById('legal-content');
+            const editBtn = document.getElementById('legal-edit-btn');
+            const saveBtn = document.getElementById('legal-save-btn');
 
             const titleMap = { 'terms': '利用規約', 'privacy': 'プライバシーポリシー' };
             titleEl.textContent = titleMap[type] || 'ドキュメント';
@@ -715,6 +737,10 @@
                     <p>読み込んでいます...</p>
                 </div>
             `;
+            
+            // Reset Buttons
+            if (editBtn) editBtn.classList.add('hidden');
+            if (saveBtn) saveBtn.classList.add('hidden');
 
             // UI Open
             modal.classList.remove('hidden');
@@ -723,14 +749,28 @@
             frame.classList.remove('scale-95');
             frame.classList.add('scale-100');
 
+            // Config Check
+            if (firebaseConfig.apiKey === "YOUR_API_KEY") {
+                contentEl.innerHTML = `
+                    <div class="text-center py-12">
+                        <p class="text-red-400 mb-2">Firebase設定が必要です</p>
+                        <p class="text-xs text-slate-400">HTMLソースコード内の <code>firebaseConfig</code> を<br>あなたのプロジェクト設定に書き換えてください。</p>
+                    </div>
+                `;
+                return;
+            }
+
             if (!currentUser) return; // Auth wait is handled roughly here by async nature
 
             try {
-                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'legal', type);
+                // 指定されたパス: law_versions/2025-1-30 を参照
+                const docRef = doc(db, 'law_versions', '2025-1-30');
                 const docSnap = await getDoc(docRef);
 
                 if (docSnap.exists()) {
-                    contentEl.innerHTML = docSnap.data().content || '<p>内容がありません。</p>';
+                    const data = docSnap.data();
+                    // type (terms または privacy) をキーとしてデータを取得。なければ content フィールド、それもなければ空
+                    contentEl.innerHTML = data[type] || data.content || '<p>内容がありません。</p>';
                 } else {
                     contentEl.innerHTML = `
                         <div class="text-center py-12">
@@ -739,9 +779,61 @@
                         </div>
                     `;
                 }
+                
+                // Show edit button
+                if (editBtn) editBtn.classList.remove('hidden');
             } catch (error) {
                 console.error("Error:", error);
                 contentEl.innerHTML = '<p class="text-red-400">読み込みエラーが発生しました。</p>';
+            }
+        };
+
+        window.toggleLegalEdit = () => {
+            const contentEl = document.getElementById('legal-content');
+            const editBtn = document.getElementById('legal-edit-btn');
+            const saveBtn = document.getElementById('legal-save-btn');
+            
+            const currentHTML = contentEl.innerHTML;
+            const textarea = document.createElement('textarea');
+            textarea.id = 'legal-textarea';
+            textarea.className = 'w-full h-[60vh] bg-slate-800 text-slate-300 p-4 rounded border border-slate-600 font-mono text-sm focus:outline-none focus:border-gold-500 resize-none';
+            textarea.value = currentHTML;
+            
+            contentEl.innerHTML = '';
+            contentEl.appendChild(textarea);
+            
+            editBtn.classList.add('hidden');
+            saveBtn.classList.remove('hidden');
+        };
+
+        window.saveLegalContent = async () => {
+            const textarea = document.getElementById('legal-textarea');
+            const contentEl = document.getElementById('legal-content');
+            const editBtn = document.getElementById('legal-edit-btn');
+            const saveBtn = document.getElementById('legal-save-btn');
+            
+            if (!textarea) return;
+            const newContent = textarea.value;
+            
+            try {
+                saveBtn.textContent = '保存中...';
+                saveBtn.disabled = true;
+                
+                // 指定されたパス: law_versions/2025-1-30 に保存
+                const docRef = doc(db, 'law_versions', '2025-1-30');
+                // terms または privacy のフィールドとして保存 (merge: true なので他のフィールドは消えません)
+                await setDoc(docRef, { [currentLegalType]: newContent }, { merge: true });
+                
+                contentEl.innerHTML = newContent;
+                
+                saveBtn.classList.add('hidden');
+                editBtn.classList.remove('hidden');
+            } catch (error) {
+                console.error("Save Error:", error);
+                alert('保存に失敗しました: ' + error.message);
+            } finally {
+                saveBtn.textContent = '保存';
+                saveBtn.disabled = false;
             }
         };
 
