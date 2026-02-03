@@ -6,6 +6,10 @@
     <title>シフトSOS | 管理者のためのシフト管理自動化ソリューション</title>
     <meta name="description" content="急なシフト交代をLINEで自動化。管理者のタイムパフォーマンスを最大化し、組織に精神的な余裕をもたらす「シフトSOS」。">
     
+    <!-- Canonical URL & OGP -->
+    <link rel="canonical" href="https://shiftsos2.web.app/">
+    <meta property="og:url" content="https://shiftsos2.web.app/">
+    
     <!-- Tailwind CSS (Design Framework) -->
     <script src="https://cdn.tailwindcss.com"></script>
     
@@ -533,15 +537,17 @@
 
     <!-- OPERATOR MODAL -->
     <div id="operator-modal" class="fixed inset-0 z-[100] hidden bg-slate-950/90 backdrop-blur-sm flex items-center justify-center p-4 transition-opacity duration-300 opacity-0">
-        <div class="relative w-full max-w-md bg-slate-900 rounded-2xl border border-slate-700 shadow-2xl overflow-hidden transform transition-transform duration-300 scale-95" id="operator-frame">
-            <div class="p-6">
-                <div class="flex justify-between items-start mb-6">
-                    <h3 class="text-xl font-serif font-bold text-white">運営者情報</h3>
-                    <button onclick="closeOperatorModal()" class="p-1 text-slate-400 hover:text-white transition-colors">
-                        <i data-lucide="x" class="w-5 h-5"></i>
-                    </button>
-                </div>
-                
+        <div class="relative w-full max-w-md bg-slate-900 rounded-2xl border border-slate-700 shadow-2xl transform transition-transform duration-300 scale-95 flex flex-col max-h-[90vh]" id="operator-frame">
+            <!-- Header -->
+            <div class="flex justify-between items-center p-6 pb-4 border-b border-slate-800 flex-shrink-0">
+                <h3 class="text-xl font-serif font-bold text-white">運営者情報</h3>
+                <button onclick="closeOperatorModal()" class="p-1 text-slate-400 hover:text-white transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- Scrollable Content -->
+            <div class="overflow-y-auto p-6 app-scrollbar">
                 <div class="space-y-4 text-sm text-slate-300">
                     <div class="flex items-center gap-4 py-3 border-b border-slate-800">
                         <i data-lucide="layers" class="w-5 h-5 text-gold-500 flex-shrink-0"></i>
