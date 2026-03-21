@@ -70,10 +70,31 @@
     </script>
 
     <style>
+        html,
         body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
             background-color: #0f172a;
             color: #f8fafc;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            line-height: 1.5;
+            -webkit-text-size-adjust: 100%;
+        }
+
+        /* Container to prevent horizontal overflow from child animations or fixed widths */
+        .page-wrapper {
+            flex: 1;
+            width: 100%;
             overflow-x: hidden;
+            position: relative;
         }
 
         /* ゴールドグラデーションテキスト
@@ -178,16 +199,23 @@
             font-weight: bold;
             margin-bottom: 1em;
             color: #1e293b;
+            line-height: 1.4;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
         }
 
         .legal-content h2 {
-            font-size: 1.25em;
+            font-size: 1.15em;
             font-weight: bold;
-            margin-top: 1.5em;
-            margin-bottom: 0.75em;
-            color: #d4af37;
-            border-bottom: 1px solid #e2e8f0;
-            padding-bottom: 0.25em;
+            margin-top: 2em;
+            margin-bottom: 1em;
+            color: #1e293b;
+            background: #f8fafc;
+            border-left: 4px solid #d4af37;
+            padding: 0.75rem 1rem;
+            line-height: 1.4;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
         }
 
         .legal-content h3 {
@@ -198,17 +226,19 @@
             color: #334155;
         }
 
-        .legal-content p {
-            margin-bottom: 1em;
-            line-height: 1.6;
+        .legal-content p,
+        .legal-content ul,
+        .legal-content ol {
+            margin-bottom: 1.2em;
+            line-height: 1.7;
             color: #334155;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
         }
 
         .legal-content ul,
         .legal-content ol {
-            margin-bottom: 1em;
-            padding-left: 1.5em;
-            color: #334155;
+            padding-left: 1.5rem;
         }
 
         .legal-content li {
@@ -236,14 +266,14 @@
          ・モバイル: ナビリンクは非表示（nav に hidden md:flex）
          ================================================ -->
     <header
-        class="fixed w-full z-50 transition-all duration-300 bg-slate-900/80 backdrop-blur-md border-b border-white/10"
+        class="fixed top-0 left-0 right-0 w-full z-50 transition-all duration-300 bg-slate-900/80 backdrop-blur-md border-b border-white/10"
         id="header">
         <!-- Beta Notice Bar -->
-        <div class="bg-slate-950/90 backdrop-blur border-b border-gold-500/20 text-center py-2 px-4">
-            <p class="text-xs md:text-sm text-slate-300 font-medium tracking-wide">
-                <span class="text-gold-500 mr-2">✦ Beta Version</span>
-                現在ベータ版期間中のため、すべての機能を<span class="text-white font-bold mx-1 border-b border-gold-500">無料</span>でご利用いただけます
-            </p>
+        <div class="bg-slate-950/90 backdrop-blur border-b border-gold-500/20 text-center py-2 px-4 w-full">
+            <span class="text-[10px] md:text-sm text-gold-400 font-medium inline-flex items-center gap-2">
+                <span class="animate-pulse text-gold-500">✦</span> Beta Version
+                <span class="text-slate-200">現在ベータ版期間中のため、すべての機能を <span class="text-gold-500 font-bold border-b border-gold-500/30">無料</span> でご利用いただけます</span>
+            </span>
         </div>
 
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -276,6 +306,7 @@
             </div>
         </div>
     </header>
+    <div class="page-wrapper">
 
     <!-- ================================================
          Hero セクション
@@ -702,25 +733,28 @@
          Footer
          ・ロゴ・法的リンク（運営者情報・利用規約・PP）・コピーライト
          ================================================ -->
-    <footer class="bg-slate-950 py-12 border-t border-slate-900">
-        <div class="max-w-7xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center text-sm">
-            <div class="mb-4 md:mb-0">
+    <footer class="bg-slate-950 py-12 border-t border-slate-900 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 flex flex-col items-center justify-center text-center text-sm space-y-8 md:flex-row md:justify-between md:text-left md:space-y-0">
+            <div>
                 <span class="text-xl font-serif font-bold text-slate-200 tracking-wider">シフトSOS</span>
                 <p class="text-slate-600 mt-2">Smart Shift Management Solution</p>
             </div>
-            <div class="flex space-x-6 text-slate-500 items-center">
+            <div class="flex flex-wrap gap-y-4 gap-x-6 text-slate-500 items-center justify-center">
                 <button onclick="openOperatorModal()"
                     class="hover:text-gold-500 transition-colors focus:outline-none">運営者情報</button>
                 <button onclick="window.openLegalModal('terms')"
                     class="hover:text-gold-500 transition-colors focus:outline-none">利用規約</button>
                 <button onclick="window.openLegalModal('privacy')"
                     class="hover:text-gold-500 transition-colors focus:outline-none">プライバシーポリシー</button>
+                <button onclick="window.openLegalModal('tokushoho')"
+                    class="hover:text-gold-500 transition-colors focus:outline-none">特定商取引法に基づく表記</button>
             </div>
-            <div class="mt-8 md:mt-0 text-slate-600">
+            <div class="text-slate-600">
                 &copy; Shift SOS All Rights Reserved.
             </div>
         </div>
     </footer>
+    </div> <!-- end .page-wrapper -->
 
     <!-- ================================================
          運営者情報 モーダル  id="operator-modal"
@@ -836,8 +870,9 @@
          ・タイトル・コンテンツは JS で Firestore から取得して #legal-content に注入する
          ================================================ -->
     <div id="legal-modal"
-        class="fixed inset-0 z-[100] hidden bg-slate-950/90 backdrop-blur-sm flex items-center justify-center p-4 transition-opacity duration-300 opacity-0">
-        <div class="relative w-full max-w-4xl bg-slate-900 rounded-2xl border border-slate-700 shadow-2xl overflow-hidden h-[80vh] flex flex-col transform transition-transform duration-300 scale-95"
+        class="fixed inset-0 w-full h-full z-[100] hidden bg-slate-950/90 backdrop-blur-sm flex items-center justify-center p-4 transition-opacity duration-300 opacity-0"
+        onclick="if(event.target === this) closeLegalModal()">
+        <div class="relative w-[95%] max-w-4xl bg-slate-900 rounded-2xl border border-slate-700 shadow-2xl overflow-hidden h-[85vh] flex flex-col transform transition-transform duration-300 scale-95"
             id="legal-frame">
             <div class="flex justify-between items-center p-4 border-b border-slate-700 bg-slate-800/50">
                 <h3 class="text-lg font-bold text-white flex items-center gap-2" id="legal-title">
@@ -850,8 +885,8 @@
                     </button>
                 </div>
             </div>
-            <div class="flex-1 overflow-y-auto p-8 app-scrollbar bg-white">
-                <div id="legal-content" class="legal-content text-slate-800">
+            <div class="flex-1 overflow-y-auto p-4 md:p-10 app-scrollbar bg-white">
+                <div id="legal-content" class="legal-content text-slate-800 max-w-3xl mx-auto">
                     <!-- Content injected via JS -->
                     <div class="flex flex-col items-center justify-center h-full text-slate-500">
                         <div class="w-8 h-8 border-2 border-slate-600 border-t-gold-500 rounded-full animate-spin mb-4">
@@ -972,7 +1007,7 @@
             const titleEl = document.getElementById('legal-title');
             const contentEl = document.getElementById('legal-content');
 
-            const titleMap = { 'terms': '利用規約', 'privacy': 'プライバシーポリシー' };
+            const titleMap = { 'terms': '利用規約', 'privacy': 'プライバシーポリシー', 'tokushoho': '特定商取引法に基づく表記' };
             titleEl.textContent = titleMap[type] || 'ドキュメント';
 
             // Reset Content
@@ -1006,7 +1041,9 @@
 
             try {
                 // 取得対象コレクション名を決定
-                const collectionName = type === 'terms' ? 'terms_versions' : 'privacy_versions';
+                let collectionName = 'privacy_versions';
+                if (type === 'terms') collectionName = 'terms_versions';
+                else if (type === 'tokushoho') collectionName = 'tokushoho_versions';
                 const colRef = collection(db, collectionName);
                 const snapshot = await getDocs(colRef);
 
