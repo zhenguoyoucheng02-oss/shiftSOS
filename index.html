@@ -11,8 +11,8 @@
     <meta name="google-site-verification" content="M6sgbPAmj45KnsC4IitdcbwdEsYlgxsIkKGp5xqUb0M" />
 
     <!-- Canonical URL & OGP -->
-    <link rel="canonical" href="https://shiftsos2.web.app/">
-    <meta property="og:url" content="https://shiftsos2.web.app/">
+    <link rel="canonical" href="https://shiftsosgroup.com/">
+    <meta property="og:url" content="https://shiftsosgroup.com/">
 
     <!-- ================================================
          外部ライブラリ
@@ -258,6 +258,38 @@
         <h1>ShiftSOS（シフトSOS）</h1>
         <p>ShiftSOSはバイトの代わりが見つかる革新的なシフト管理アプリです。</p>
     </noscript>
+
+    <!-- 旧サイト（GitHub Pages）からの移転案内用コード -->
+    <script>
+        if (!window.location.hostname.includes("github.io")) {
+            // 公式サイト等（github.io以外）では、移転案内バナーを即座に非表示にする（チラつき防止）
+            document.head.insertAdjacentHTML('beforeend', '<style>#migration-notice { display: none !important; }</style>');
+        } else {
+            // 3秒後に新しい公式サイトへリダイレクト
+            setTimeout(function() {
+                window.location.replace("https://shiftsosgroup.com/");
+            }, 3000);
+        }
+    </script>
+
+    <!-- ================================================
+         旧サイト（GitHub Pages）からの移転案内バナー
+         ※JSによって、github.ioドメイン以外では表示されません
+         ================================================ -->
+    <div id="migration-notice" class="fixed inset-0 z-[99999] bg-slate-900 flex flex-col items-center justify-center p-6 text-center">
+        <div class="bg-slate-800 p-8 rounded-2xl border border-gold-500/30 max-w-2xl w-full shadow-2xl relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-1 bg-gold-500 animate-[pulse_3s_ease-in-out_infinite]"></div>
+            <h1 class="text-3xl md:text-4xl font-serif text-white mb-6 leading-tight">公式サイトが<br class="md:hidden"/>新しくなりました！</h1>
+            <p class="text-slate-300 mb-8 text-lg">
+                ShiftSOSをご利用いただきありがとうございます。<br>
+                新しい公式サイト（<strong>shiftsosgroup.com</strong>）へ移転しました。
+            </p>
+            <a href="https://shiftsosgroup.com/" class="inline-block w-full sm:w-auto px-8 py-4 bg-gold-500 hover:bg-gold-600 text-slate-900 font-bold rounded-full transition-all text-lg shadow-[0_0_20px_rgba(212,175,55,0.3)] hover:shadow-[0_0_30px_rgba(212,175,55,0.5)]">
+                こちらをクリックして移動 👉<br class="sm:hidden"><span class="text-sm font-normal">https://shiftsosgroup.com/</span>
+            </a>
+            <p class="text-slate-500 text-sm mt-6">※数秒後に自動的に新しいサイトへ移動します。</p>
+        </div>
+    </div>
 
     <!-- ================================================
          Header / ナビゲーション
@@ -1044,7 +1076,7 @@
                 // 取得対象コレクション名を決定
                 let collectionName = 'privacy_versions';
                 if (type === 'terms') collectionName = 'terms_versions';
-                else if (type === 'tokushoho') collectionName = 'tokushoho_versions';
+                else if (type === 'tokushoho') collectionName = 'law_versions';
                 const colRef = collection(db, collectionName);
                 const snapshot = await getDocs(colRef);
 
@@ -1076,12 +1108,36 @@
                     // type (terms または privacy) をキーとしてデータを取得。なければ content フィールド、それもなければ空
                     contentEl.innerHTML = data[type] || data.content || '<p>内容がありません。</p>';
                 } else {
-                    contentEl.innerHTML = `
-                        <div class="text-center py-12">
-                            <p class="text-slate-400 mb-2">ドキュメントが登録されていません。</p>
-                            <p class="text-xs text-slate-600 mb-4">現在準備中です。</p>
-                        </div>
-                    `;
+                    if (type === 'tokushoho') {
+                        contentEl.innerHTML = `
+                            <div class="legal-content">
+                                <h1>特定商取引法に基づく表記</h1>
+                                <h3>事業者の名称</h3>
+                                <p>（現在準備中です。正式な表記はFirebaseから取得されます）</p>
+                                <h3>代表責任者</h3>
+                                <p>（現在準備中です。正式な表記はFirebaseから取得されます）</p>
+                                <h3>事業者の所在地</h3>
+                                <p>請求があったら遅滞なく開示します</p>
+                                <h3>事業者の連絡先</h3>
+                                <p>請求があったら遅滞なく開示します</p>
+                                <h3>販売価格について</h3>
+                                <p>販売価格は、購入手続きの際に画面に表示された金額（表示価格/消費税込）と致します。</p>
+                                <h3>代金（対価）の支払方法と時期</h3>
+                                <p>支払方法：クレジットカードによる決済がご利用頂けます。<br />支払時期：商品注文確定時にお支払いが確定致します。</p>
+                                <h3>役務または商品の引渡時期</h3>
+                                <p>決済完了後、直ちにご利用いただけます。</p>
+                                <h3>返品についての特約に関する事項</h3>
+                                <p>商品に欠陥がある場合を除き、基本的には返品（返金）には応じません。</p>
+                            </div>
+                        `;
+                    } else {
+                        contentEl.innerHTML = `
+                            <div class="text-center py-12">
+                                <p class="text-slate-400 mb-2">ドキュメントが登録されていません。</p>
+                                <p class="text-xs text-slate-600 mb-4">現在準備中です。</p>
+                            </div>
+                        `;
+                    }
                 }
             } catch (error) {
                 console.error("Error:", error);
